@@ -5,19 +5,20 @@ import exceptions.InsufficientFundsException;
 import exceptions.InvalidAmountException;
 import exceptions.InvalidPasswordException;
 
+import java.math.BigDecimal;
+
 public class BankAccount {
 
     private final String customerName;
     private final String userId;
     private final String password;
-    private double balance;
+    private BigDecimal balance = BigDecimal.ZERO;
 
     public BankAccount(String customerName, String userId, String password) {
         validatePassword(password);
         this.customerName = customerName;
         this.userId = userId;
         this.password = password;
-        this.balance = 0;
     }
 
     public static void validatePassword(String password) {
@@ -35,21 +36,25 @@ public class BankAccount {
         }
     }
 
-    public void deposit(double amount) {
-        if (amount <= 0) {
+    public void deposit(BigDecimal amount) {
+        if (amount == null || amount.signum() <= 0) {
             throw new InvalidAmountException("Deposit amount must be greater than 0");
         }
-        balance += amount;
+        balance = balance.add(amount);
     }
 
-    public void withdraw(double amount) {
-        if (amount <= 0) {
+    public void withdraw(BigDecimal amount) {
+        if (amount == null || amount.signum() <= 0) {
             throw new InvalidAmountException("Withdrawal amount must be greater than 0");
         }
-        if (amount > balance) {
-            throw new InsufficientFundsException("Insufficient funds: balance is " + balance);
+        if (amount.compareTo(balance) > 0) {
+            throw new InsufficientFundsException("Insufficient funds: balance is " + balance.toPlainString());
         }
-        balance -= amount;
+        balance = balance.subtract(amount);
+    }
+
+    public String getAccountType() {
+        return "Basic";
     }
 
     public String getCustomerName() {
@@ -60,7 +65,7 @@ public class BankAccount {
         return userId;
     }
 
-    public double getBalance() {
+    public BigDecimal getBalance() {
         return balance;
     }
 }

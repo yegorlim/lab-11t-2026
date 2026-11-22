@@ -4,7 +4,9 @@ import exceptions.NegativeTimeSpanException;
 
 public class TimeSpan {
 
-    private long totalMinutes;
+    private static final long MAX_MINUTES = Integer.MAX_VALUE;
+
+    private final long totalMinutes;
 
     public TimeSpan(int minutes) {
         if (minutes < 0) {
@@ -23,6 +25,13 @@ public class TimeSpan {
         this.totalMinutes = hours * 60L + minutes;
     }
 
+    private TimeSpan(long minutes) {
+        if (minutes > MAX_MINUTES) {
+            throw new IllegalInputTimeSpanException("Time span is too large");
+        }
+        this.totalMinutes = minutes;
+    }
+
     public long getHours() {
         return totalMinutes / 60;
     }
@@ -36,7 +45,7 @@ public class TimeSpan {
     }
 
     public TimeSpan add(TimeSpan other) {
-        return new TimeSpan((int) (totalMinutes + other.totalMinutes));
+        return new TimeSpan(totalMinutes + other.totalMinutes);
     }
 
     public TimeSpan subtract(TimeSpan other) {
@@ -44,14 +53,18 @@ public class TimeSpan {
         if (result < 0) {
             throw new NegativeTimeSpanException("Time span became negative");
         }
-        return new TimeSpan((int) result);
+        return new TimeSpan(result);
     }
 
     public TimeSpan scale(double factor) {
-        if (factor < 0) {
-            throw new IllegalScaleFactorException("Scale factor must not be negative");
+        if (!Double.isFinite(factor) || factor < 0) {
+            throw new IllegalScaleFactorException("Scale factor must be a finite non-negative number");
         }
-        return new TimeSpan((int) Math.round(totalMinutes * factor));
+        double scaled = totalMinutes * factor;
+        if (scaled > MAX_MINUTES) {
+            throw new IllegalInputTimeSpanException("Scaled time span is too large");
+        }
+        return new TimeSpan(Math.round(scaled));
     }
 
     @Override
